@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questionator Web</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Questionator Web</h1>
+    </header>
+    <main class="container">
+        <section id="config-section">
+            <h2>Configuration</h2>
+            <div class="config-controls">
+                <label for="api-key">Clé API Anthropic :</label>
+                <input type="password" id="api-key" placeholder="Entrez votre clé API">
+                <button id="save-api-key">Sauvegarder et tester la clé</button>
+            </div>
+        </section>
+        <section id="input-section">
+            <h2>Chargez votre fichier</h2>
+            <input type="file" id="file-input" accept=".txt">
+            <div class="controls">
+                <label for="question-count">Nombre de questions :</label>
+                <input type="number" id="question-count" min="1" max="15" value="10">
+                <label for="output-format">Format de sortie :</label>
+                <select id="output-format">
+                    <option value="html">HTML</option>
+                    <option value="text">Texte</option>
+                    <option value="markdown">Markdown</option>
+                </select>
+                <button id="generate-btn">Générer les questions</button>
+            </div>
+        </section>
+        <section id="output-section">
+            <h2>Questions générées</h2>
+            <div id="questions-container"></div>
+            <button id="download-btn" style="display: none;">Télécharger</button>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 Questionator Web</p>
+    </footer>
+    <script src="js/main.js"></script>
+</body>
+</html>
