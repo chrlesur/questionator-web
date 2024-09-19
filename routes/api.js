@@ -62,7 +62,19 @@ router.post('/generate-questions', upload.single('file'), async (req, res) => {
     try {
         const text = file.buffer.toString('utf-8');
         logger.info(`Génération de ${count} questions à partir d'un fichier de ${text.length} caractères`);
-        const prompt = `Générez ${count} questions pertinentes basées sur l'ensemble du verbatim suivant. Pour chaque question, fournissez la bonne réponse, une explication de pourquoi c'est la bonne réponse, et le passage associé du verbatim. Verbatim: ${text}`;
+        const prompt = `Générez ${count} questions pertinentes basées sur le verbatim suivant. Pour chaque question, fournissez la question, la bonne réponse, une explication de pourquoi c'est la bonne réponse, et le passage associé du verbatim. Renvoyez le résultat sous forme de JSON valide avec la structure suivante :
+        {
+          "questions": [
+            {
+              "question": "La question",
+              "answer": "La réponse",
+              "reason": "L'explication",
+              "passage": "Le passage du verbatim"
+            },
+            ...
+          ]
+        }
+        Verbatim: ${text}`;
 
         const response = await axios.post(CLAUDE_API_URL, {
             model: CLAUDE_MODEL_NAME,
@@ -83,7 +95,10 @@ router.post('/generate-questions', upload.single('file'), async (req, res) => {
         const questions = parseQuestions(generatedText);
         logger.info(`${questions.length} questions extraites`);
 
-        const formattedOutput = formatOutput(questions.slice(0, count), format);
+        // Limiter le nombre de questions si nécessaire
+        const limitedQuestions = questions.slice(0, count);
+
+        const formattedOutput = formatOutput(limitedQuestions, format);
         res.json({ questions: formattedOutput });
     } catch (error) {
         logger.error("Erreur lors de l'appel à l'API Claude:", error.response ? error.response.data : error.message);
@@ -92,77 +107,27 @@ router.post('/generate-questions', upload.single('file'), async (req, res) => {
 });
 
 function parseQuestions(text) {
-    logger.debug('Parsing des questions à partir du texte généré');
-    const questions = [];
-    const lines = text.split('\n');
-
-    let currentQuestion = {};
-    let currentField = '';
-    const questionPattern = /^\d+\.\s/;
-    const qrPattern = /Q:\s*(.*?)\s*R:\s*(.*)/;
-    const passagePattern = /Passage(?:\s*associé)?\s*:\s*"?(.+?)"?$/;
-
-    for (const line of lines) {
-        const trimmedLine = line.trim();
-
-        if (questionPattern.test(trimmedLine)) {
-            if (currentQuestion.question) {
-                questions.push(currentQuestion);
-            }
-            currentQuestion = {};
-            currentField = 'question';
-
-            const match = qrPattern.exec(trimmedLine);
-            if (match) {
-                currentQuestion.question = match[1].trim();
-                currentQuestion.answer = match[2].trim();
-                currentField = 'answer';
-            } else {
-                currentQuestion.question = trimmedLine.replace(questionPattern, '').trim();
-            }
-        } else if (trimmedLine.startsWith('Question :')) {
-            currentQuestion.question = trimmedLine.replace('Question :', '').trim();
-            currentField = 'question';
-        } else if (trimmedLine.startsWith('Réponse:') || trimmedLine.startsWith('Réponse :')) {
-            currentQuestion.answer = trimmedLine.replace(/Réponse:?/, '').trim();
-            currentField = 'answer';
-        } else if (trimmedLine.startsWith('Explication:') || trimmedLine.startsWith('Explication :')) {
-            currentQuestion.reason = trimmedLine.replace(/Explication:?/, '').trim();
-            currentField = 'reason';
-        } else if (trimmedLine.startsWith('Passage:') || trimmedLine.startsWith('Passage :')) {
-            currentQuestion.passage = trimmedLine.replace(/Passage:?/, '').trim();
-            currentField = 'passage';
+    logger.debug('Parsing des questions à partir du JSON généré');
+    try {
+        // Chercher le début et la fin du JSON dans le texte
+        const jsonStart = text.indexOf('{');
+        const jsonEnd = text.lastIndexOf('}') + 1;
+        const jsonString = text.slice(jsonStart, jsonEnd);
+        
+        // Parser le JSON
+        const data = JSON.parse(jsonString);
+        
+        if (Array.isArray(data.questions)) {
+            return data.questions;
         } else {
-            const passageMatch = passagePattern.exec(trimmedLine);
-            if (passageMatch) {
-                currentQuestion.passage = passageMatch[1].trim();
-                currentField = 'passage';
-            } else {
-                switch (currentField) {
-                    case 'question':
-                        currentQuestion.question += ' ' + trimmedLine;
-                        break;
-                    case 'answer':
-                        currentQuestion.answer += ' ' + trimmedLine;
-                        break;
-                    case 'reason':
-                        currentQuestion.reason += ' ' + trimmedLine;
-                        break;
-                    case 'passage':
-                        currentQuestion.passage += ' ' + trimmedLine;
-                        break;
-                }
-            }
+            logger.error('Le JSON parsé ne contient pas un tableau de questions');
+            return [];
         }
+    } catch (error) {
+        logger.error('Erreur lors du parsing du JSON:', error);
+        return [];
     }
-
-    if (currentQuestion.question) {
-        questions.push(currentQuestion);
-    }
-
-    return questions;
 }
-
 
 function formatOutput(questions, format) {
     switch (format) {
