@@ -21,7 +21,7 @@ Questionator Web est une application web qui génère automatiquement des questi
 
 1. Clonez ce dépôt :
    ```
-   git clone https://github.com/votre-nom-utilisateur/questionator-web.git
+   git clone https://github.com/chrlesur/questionator-web.git
    cd questionator-web
    ```
 
