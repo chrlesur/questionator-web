@@ -61,6 +61,24 @@ Questionator Web est une application web qui génère automatiquement des questi
 
 La clé API est stockée localement dans le navigateur de l'utilisateur. Assurez-vous d'utiliser Questionator Web sur un appareil sécurisé et ne partagez pas votre clé API.
 
+## Débogage
+
+Pour activer le mode de débogage, vous pouvez définir la variable d'environnement `NODE_ENV` sur "development". Cela activera des logs plus détaillés.
+
+Sur Linux/macOS :
+
+   ```
+   export NODE_ENV="development"
+   ```
+
+Sur Windows (PowerShell) :
+
+   ```
+   $env:NODE_ENV="development"
+   ```
+
+Ensuite, démarrez l'application normalement avec `npm start`. En mode développement, vous verrez des logs plus détaillés qui peuvent aider au débogage.
+
 ## Contribution
 
 Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou à soumettre une pull request.

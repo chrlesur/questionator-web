@@ -171,6 +171,13 @@ footer {
     padding: 1rem 0;
     background-color: var(--primary-color);
     color: white;
+    font-size: 0.9rem;
+}
+
+footer::after {
+    content: "Questionator Web v1.1.0";
+    display: block;
+    font-weight: bold;
 }
 
 @media (max-width: 768px) {
